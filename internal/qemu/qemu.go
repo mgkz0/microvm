@@ -3,24 +3,18 @@ package qemu
 import (
 	"context"
 	"fmt"
+	"github.com/mgkz0/microvm/internal/vm"
 	"os"
 	"os/exec"
 	"strconv"
 )
 
-func newQemuDisk(ctx context.Context, vmName string, diskSize int) string {
-	dir_path := "./" + vmName
-	_, err := os.Stat(dir_path)
-	if err != nil {
-		os.Mkdir(dir_path, 0755)
-	}
-
-	full_path := dir_path + "/disk.qcow2"
+func newQemuDisk(ctx context.Context, diskPath string, diskSize int) {
 	args := []string{
 		"create",
 		"-f", "qcow2",
-		full_path,
-		strconv.Itoa(diskSize) + "GB",
+		diskPath,
+		strconv.Itoa(diskSize) + "G",
 	}
 
 	cmd := exec.CommandContext(ctx, "qemu-img", args...)
@@ -29,11 +23,15 @@ func newQemuDisk(ctx context.Context, vmName string, diskSize int) string {
 		panic(err)
 	}
 	fmt.Print(string(out))
-	return full_path
 }
 
-func NewQemuVM(ctx context.Context, iso, qmpSocket, pidFile, vmName string, diskSize int) {
-	disk := newQemuDisk(ctx, vmName, diskSize)
+func NewQemuVM(ctx context.Context, c vm.VMConfig) {
+	_, err := os.Stat(c.Dir)
+	if err != nil {
+		os.Mkdir(c.Dir, 0755)
+	}
+	diskPath := c.Dir + c.Disk
+	newQemuDisk(ctx, diskPath, c.DiskSize)
 	print("=====================================================")
 	args := []string{
 		"-enable-kvm",
@@ -42,18 +40,18 @@ func NewQemuVM(ctx context.Context, iso, qmpSocket, pidFile, vmName string, disk
 		"-smp", "2",
 
 		"-drive",
-		"file=" + disk + ",if=virtio,format=qcow2",
+		"file=" + diskPath + ",if=virtio,format=qcow2",
 
-		"-cdrom", iso,
+		"-cdrom", c.ISO,
 
 		"-nic", "user,model=virtio",
 
 		"-display", "none",
 
 		"-qmp",
-		"unix:" + qmpSocket + ",server=on,wait=off",
+		"unix:" + c.QMPSocket + ",server=on,wait=off",
 
-		"-pidfile", pidFile,
+		"-pidfile", c.PIDFile,
 	}
 
 	cmd := exec.Command("qemu-system-x86_64", args...)

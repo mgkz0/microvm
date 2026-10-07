@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"github.com/mgkz0/microvm/internal/qemu"
-	"github.com/mgkz0/microvm/internal/vms"
+	"github.com/mgkz0/microvm/internal/vm"
 	"github.com/spf13/cobra"
 )
 
 var (
 	memoryMiB int
 	vcpus     int
-	diskSize  string
-	isoPath   string
+	diskSize  int
+	iso       string
+	dir       string
+	disk      string
 )
 
 var rootCmd = &cobra.Command{
@@ -21,11 +23,14 @@ var rootCmd = &cobra.Command{
 var cmdNew = &cobra.Command{
 	Use:   "new [vm-name]",
 	Short: "Create a new VM",
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vmName := args[0]
-		vm := vm.NewVMConfig(vmName, )
-		qemu.NewQemuVM(cmd.Context(), isoPath, qm)	
-	}
+		vmDir := dir + vmName + "/"
+		vm := vm.NewVMConfig(vmName, vmDir, disk, iso, memoryMiB, vcpus, diskSize)
+		qemu.NewQemuVM(cmd.Context(), *vm)
+		return nil
+	},
 }
 
 var cmdRemove = &cobra.Command{
@@ -55,21 +60,39 @@ func init() {
 		"number of virtual CPUs",
 	)
 
-	cmdNew.Flags().StringVar(
+	cmdNew.Flags().IntVar(
 		&diskSize,
-		"disk",
-		"20G",
+		"disksize",
+		20,
 		"virtual disk size",
 	)
 
 	cmdNew.Flags().StringVar(
-		&isoPath,
+		&iso,
 		"iso",
 		"",
 		"installer ISO",
 	)
 
+	cmdNew.Flags().StringVar(
+		&dir,
+		"dir",
+		"./",
+		"VM directory",
+	)
+
+	cmdNew.Flags().StringVar(
+		&disk,
+		"disk",
+		"disk.qcow2",
+		"Virtual disk name",
+	)
+
 	rootCmd.AddCommand(cmdNew)
 	rootCmd.AddCommand(cmdStop)
 	rootCmd.AddCommand(cmdRemove)
+}
+
+func Execute() error {
+	return rootCmd.Execute()
 }

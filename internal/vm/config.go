@@ -15,26 +15,16 @@ type VMConfig struct {
 	ISO string
 }
 
-func NewVMConfig(name string, dir *string, disk *string, iso string, memory, vcpus, diskSize int) *VMConfig {
-	baseDir := "./" + name + "/"
-	baseDiskName := "disk.qcow2"
-	QMPSocket := "qmp.sock"
-	PIDFile := "qemu.pid"
-	if dir != nil {
-		baseDir = *dir
-	}
-	if disk != nil {
-		baseDiskName = *disk
-	}
+func NewVMConfig(name, dir, disk, iso string, memory, vcpus, diskSize int) *VMConfig {
 	return &VMConfig{
 		Name:      name,
 		MemoryMiB: memory,
 		VCPUs:     vcpus,
-		Dir:       baseDir,
-		Disk:      baseDiskName,
+		Dir:       dir,
+		Disk:      disk,
 		DiskSize:  diskSize,
-		QMPSocket: QMPSocket,
-		PIDFile:   PIDFile,
+		QMPSocket: "qmp.sock",
+		PIDFile:   "qemu.pid",
 		ISO:       iso,
 	}
 }
