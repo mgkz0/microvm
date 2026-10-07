@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/mgkz0/microvm/internal/qemu"
+	"github.com/mgkz0/microvm/internal/vms"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +23,7 @@ var cmdNew = &cobra.Command{
 	Short: "Create a new VM",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vmName := args[0]
+		vm := vm.NewVMConfig(vmName, )
 		qemu.NewQemuVM(cmd.Context(), isoPath, qm)	
 	}
 }
